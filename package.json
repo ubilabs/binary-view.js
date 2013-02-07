@@ -1,0 +1,9 @@
+{
+  "name": "binary-view",
+  "version": "0.0.1",
+  "description": "DataView schemes for binary formats.",
+  "main": "binary-view.js",
+  "repository": "",
+  "author": "Martin Kleppe <kleppe@ubilabs.net>",
+  "license": "BSD"
+}
