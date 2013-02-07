@@ -3,13 +3,17 @@ var undefined,
   POW16 = Math.pow(2, 16),  // 65536
   POW32 = Math.pow(2, 32);  // 4294967296
 
-var BinaryView = function(buffer){
+var BinaryView = function(options){
 
-  this.pointer = 0;
+  options = options || {};
 
-  this.assignBuffer(buffer);
-  this.dataView = new DataView(this.buffer);
-  this.byteLength = this.buffer.byteLength;
+  if (options.schema){
+    this.setSchema(schema);
+  }
+
+  if (options.data){
+    this.setData(options.data);
+  }
 };
 
 BinaryView.TYPES = {
@@ -23,100 +27,43 @@ BinaryView.TYPES = {
   "Float64":  { bytes: 8 }
 };
 
-BinaryView.prototype.assignBuffer = function(buffer){
-  switch (buffer.constructor){
-    case ArrayBuffer:
-      this.buffer = buffer;
-      break;
-
-    case Number:
-      this.buffer = new ArrayBuffer(buffer);
-      break;
-
-    case Array:
-      this.createBufferFromArray(buffer);
-      break;
-
-    default:
-      throw new Error(buffer.constructor.name + " is not supported.");
-  }
-};
-
-BinaryView.prototype.createBufferFromArray = function(scheme){
+BinaryView.prototype.setSchema = function(schema){
 
   var byteLength = 0;
 
-  scheme.forEach(function(type){
+  schema.forEach(function(type){
     byteLength += BinaryView.TYPES[type].bytes;
   });
 
-  this.scheme = scheme;
-  this.length = scheme.length;
-  this.index = 0;
+  this.schema = schema;
 
   this.buffer = new ArrayBuffer(byteLength);
+  this.dataView = new DataView(this.buffer);
+  this.byteLength = this.buffer.byteLength;
 };
 
-BinaryView.prototype._offset = function(offset, type){
-  if (offset === undefined){
-    offset = this.pointer;
-  } else {
-    this.pointer = offset;
-  }
-  this.pointer += BinaryView.TYPES[type].bytes;
-  return offset;
-};
+BinaryView.prototype.setData = function(values){
+  var offset = 0;
 
-BinaryView.prototype.set = function(type, offset, value){
-  if (value === undefined){
-    value = offset;
-    offset = undefined;
-  }
-
-  if (value === undefined && this.scheme){
-    value = type;
-    type = this.scheme[this.index];
-    this.index++;
-  }
-
-  offset = this._offset(offset, type);
-  this.dataView["set" + type](offset, value);
-};
-
-BinaryView.prototype.getOffsetForIndex = function(index){
-  var offset = 0,
-    type, i;
-  
-  for (i = 0; i < index; i++){
-    type = this.scheme[i];
+  this.schema.forEach(function(type, index){
+    this.dataView["set" + type](offset, values[index]);
     offset += BinaryView.TYPES[type].bytes;
-  }
-
-  return offset;
+  }.bind(this));
 };
 
-BinaryView.prototype.get = function(type, offset){
+BinaryView.prototype.getData = function(){
+  var result = [],
+    offset = 0;
 
-  if (type === undefined && this.scheme){
-    type = this.scheme[this.index];
-    offset = this.getOffsetForIndex(this.index);
-    this.index++;
-  }
+  this.schema.forEach(function(type, index){
+    var value = this.dataView["get" + type](offset);
+    result.push(value);
+    offset += BinaryView.TYPES[type].bytes;
+  }.bind(this));
 
-  offset = this._offset(offset, type);
-  return this.dataView["get" + type](offset);
+  return result;
 };
 
-for (var type in BinaryView.TYPES){
-  (function(type){
-    BinaryView.prototype["set" + type] = function(value, offset){
-      this.set(type, value, offset);
-    };
-    BinaryView.prototype["get" + type] = function(offset){
-      return this.get(type, offset);
-    };
-  })(type);
-}
 
 if (typeof module !== "undefined"){
   module.exports = BinaryView;
