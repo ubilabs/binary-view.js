@@ -8,7 +8,11 @@ var BinaryView = function(options){
   options = options || {};
 
   if (options.schema){
-    this.setSchema(schema);
+    this.setSchema(options.schema);
+  }
+
+  if (options.mapping){
+    this.setMapping(options.mapping);
   }
 
   if (options.data){
@@ -37,7 +41,15 @@ BinaryView.prototype.setSchema = function(schema){
     length += BinaryView.TYPES[type].bytes;
   });
 
-  this.buffer = new ArrayBuffer(length);
+  this.setBuffer(new ArrayBuffer(length));
+};
+
+BinaryView.prototype.setMapping = function(mapping){
+  this.mapping = mapping;
+};
+
+BinaryView.prototype.setBuffer = function(buffer){
+  this.buffer = buffer;
   this.dataView = new DataView(this.buffer);
 };
 
@@ -51,12 +63,16 @@ BinaryView.prototype.setData = function(values){
 };
 
 BinaryView.prototype.getData = function(){
-  var result = [],
+  var result = this.mapping ? {} : [],
     offset = 0;
 
   this.schema.forEach(function(type, index){
     var value = this.dataView["get" + type](offset);
-    result.push(value);
+    if (this.mapping) {
+      result[this.mapping[index]] = value;
+    } else {
+      result.push(value);
+    }
     offset += BinaryView.TYPES[type].bytes;
   }.bind(this));
 
@@ -71,7 +87,7 @@ BinaryView.prototype.fromString = function(string){
   var length = string.length,
     buffer = new ArrayBuffer(string.length * 2),
     view = new Uint16Array(buffer);
-    
+
   for (var i=0; i < length; i++) {
     view[i] = string.charCodeAt(i);
   }
