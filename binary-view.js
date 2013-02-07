@@ -3,13 +3,13 @@ var undefined,
   POW16 = Math.pow(2, 16),  // 65536
   POW32 = Math.pow(2, 32);  // 4294967296
 
-var BinaryView = function(buffer, TODO_SCHEME){
-  this.buffer = buffer;
-  this.dataView = new DataView(buffer);
-  this.length = this.buffer.byteLength;
+var BinaryView = function(buffer){
+
   this.pointer = 0;
-  // this.index = 0;
-  this.writePointer = 0;
+
+  this.assignBuffer(buffer);
+  this.dataView = new DataView(this.buffer);
+  this.byteLength = this.buffer.byteLength;
 };
 
 BinaryView.TYPES = {
@@ -23,6 +23,40 @@ BinaryView.TYPES = {
   "Float64":  { bytes: 8 }
 };
 
+BinaryView.prototype.assignBuffer = function(buffer){
+  switch (buffer.constructor){
+    case ArrayBuffer:
+      this.buffer = buffer;
+      break;
+
+    case Number:
+      this.buffer = new ArrayBuffer(buffer);
+      break;
+
+    case Array:
+      this.createBufferFromArray(buffer);
+      break;
+
+    default:
+      throw new Error(buffer.constructor.name + " is not supported.");
+  }
+};
+
+BinaryView.prototype.createBufferFromArray = function(scheme){
+
+  var byteLength = 0;
+
+  scheme.forEach(function(type){
+    byteLength += BinaryView.TYPES[type].bytes;
+  });
+
+  this.scheme = scheme;
+  this.length = scheme.length;
+  this.index = 0;
+
+  this.buffer = new ArrayBuffer(byteLength);
+};
+
 BinaryView.prototype._offset = function(offset, type){
   if (offset === undefined){
     offset = this.pointer;
@@ -34,19 +68,43 @@ BinaryView.prototype._offset = function(offset, type){
 };
 
 BinaryView.prototype.set = function(type, offset, value){
-  var method = "set" + type;
   if (value === undefined){
     value = offset;
     offset = undefined;
   }
+
+  if (value === undefined && this.scheme){
+    value = type;
+    type = this.scheme[this.index];
+    this.index++;
+  }
+
   offset = this._offset(offset, type);
-  this.dataView[method](offset, value);
+  this.dataView["set" + type](offset, value);
+};
+
+BinaryView.prototype.getOffsetForIndex = function(index){
+  var offset = 0,
+    type, i;
+  
+  for (i = 0; i < index; i++){
+    type = this.scheme[i];
+    offset += BinaryView.TYPES[type].bytes;
+  }
+
+  return offset;
 };
 
 BinaryView.prototype.get = function(type, offset){
-  var method = "get" + type;
+
+  if (type === undefined && this.scheme){
+    type = this.scheme[this.index];
+    offset = this.getOffsetForIndex(this.index);
+    this.index++;
+  }
+
   offset = this._offset(offset, type);
-  return this.dataView[method](offset);
+  return this.dataView["get" + type](offset);
 };
 
 for (var type in BinaryView.TYPES){
