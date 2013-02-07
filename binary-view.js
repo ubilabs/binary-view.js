@@ -29,17 +29,16 @@ BinaryView.TYPES = {
 
 BinaryView.prototype.setSchema = function(schema){
 
-  var byteLength = 0;
-
-  schema.forEach(function(type){
-    byteLength += BinaryView.TYPES[type].bytes;
-  });
+  var length = 1;
 
   this.schema = schema;
 
-  this.buffer = new ArrayBuffer(byteLength);
+  this.schema.forEach(function(type){
+    length += BinaryView.TYPES[type].bytes;
+  });
+
+  this.buffer = new ArrayBuffer(length);
   this.dataView = new DataView(this.buffer);
-  this.byteLength = this.buffer.byteLength;
 };
 
 BinaryView.prototype.setData = function(values){
