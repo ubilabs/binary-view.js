@@ -63,6 +63,22 @@ BinaryView.prototype.getData = function(){
   return result;
 };
 
+BinaryView.prototype.toString = function(){
+  return String.fromCharCode.apply(null, new Uint16Array(this.buffer));
+};
+
+BinaryView.prototype.fromString = function(string){
+  var length = string.length,
+    buffer = new ArrayBuffer(string.length * 2),
+    view = new Uint16Array(buffer);
+    
+  for (var i=0; i < length; i++) {
+    view[i] = string.charCodeAt(i);
+  }
+  this.buffer = buffer;
+  this.dataView = new DataView(this.buffer);
+};
+
 
 if (typeof module !== "undefined"){
   module.exports = BinaryView;
