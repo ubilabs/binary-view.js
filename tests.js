@@ -35,7 +35,25 @@ view2 = new BinaryView({
 data = view2.getData();
 test("Mapping", data.b, 2);
 
-view2.setBuffer(view1.buffer);
+view2.setArrayBuffer(view1.arrayBuffer);
 data = view2.getData();
 
 test("Reassign buffer.", data.b, 1234567);
+
+if (typeof require == "function"){
+
+  binary = view2.getBuffer();
+  view2.setBuffer(binary);
+  data = view2.getData();
+
+  test("convert", data.d, 0.12345);
+
+  base64 = binary.toString("base64");
+  test("base64", base64, "ewAS1of7Lj+/mmtQsPJ8AA==");
+
+  fs = require("fs");
+  fs.writeFileSync("out.bin", binary);
+  file = fs.readFileSync("out.bin");
+  binary = new Buffer(file);
+  test("Save read file", base64, binary.toString("base64"));
+}
