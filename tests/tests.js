@@ -44,7 +44,7 @@ test("Mapping", data.b, 2);
 view2.setArrayBuffer(view1.arrayBuffer);
 data = view2.getData();
 
-test("Reassign buffer.", data.b, 1234567);
+test("Reassign buffer", data.b, 1234567);
 
 if (typeof require == "function"){
 
@@ -62,4 +62,31 @@ if (typeof require == "function"){
   file = fs.readFileSync("out.bin");
   binary = new Buffer(file);
   test("Save read file", base64, binary.toString("base64"));
+
+} else {
+
+  xhr = new XMLHttpRequest();
+  xhr.open('GET', 'out.bin', true);
+  xhr.responseType = 'arraybuffer';
+
+  xhr.onload = function(e) {
+    view2.setArrayBuffer(this.response);
+    data = view2.getData();
+    test("Load via XHR", data.d, 0.12345);
+
+  };
+
+  xhr.send();
+
+  function loadfile(){
+    file = document.getElementById("file").files[0];
+    reader = new FileReader();
+    reader.onloadend = function(event) {
+      view2.setArrayBuffer(event.target.result);
+      data = view2.getData();
+      test("Read view FileReader", data.d, 0.12345);
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
 }
