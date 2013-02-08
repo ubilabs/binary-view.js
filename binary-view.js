@@ -41,7 +41,7 @@ BinaryView.prototype.setSchema = function(schema){
     length += BinaryView.TYPES[type].bytes;
   });
 
-  this.setBuffer(new ArrayBuffer(length));
+  this.setArrayBuffer(new ArrayBuffer(length));
 };
 
 BinaryView.prototype.setMapping = function(mapping){
@@ -49,8 +49,24 @@ BinaryView.prototype.setMapping = function(mapping){
 };
 
 BinaryView.prototype.setBuffer = function(buffer){
-  this.buffer = buffer;
-  this.dataView = new DataView(this.buffer);
+  var arrayBuffer = new ArrayBuffer(buffer.length),
+    view = new Uint8Array(arrayBuffer),
+    i;
+
+  for (i = 0; i < buffer.length; i++) {
+    view[i] = buffer[i];
+  }
+
+  this.setArrayBuffer(arrayBuffer);
+};
+
+BinaryView.prototype.getBuffer = function(){
+  return new Buffer(new Uint8Array(this.arrayBuffer));
+};
+
+BinaryView.prototype.setArrayBuffer = function(arrayBuffer){
+  this.arrayBuffer = arrayBuffer;
+  this.dataView = new DataView(this.arrayBuffer);
 };
 
 BinaryView.prototype.setData = function(values){
@@ -80,19 +96,19 @@ BinaryView.prototype.getData = function(){
 };
 
 BinaryView.prototype.toString = function(){
-  return String.fromCharCode.apply(null, new Uint16Array(this.buffer));
+  return String.fromCharCode.apply(null, new Uint16Array(this.arrayBuffer));
 };
 
 BinaryView.prototype.fromString = function(string){
   var length = string.length,
-    buffer = new ArrayBuffer(string.length * 2),
-    view = new Uint16Array(buffer);
+    arrayBuffer = new ArrayBuffer(string.length * 2),
+    view = new Uint16Array(arrayBuffer);
 
   for (var i=0; i < length; i++) {
     view[i] = string.charCodeAt(i);
   }
-  this.buffer = buffer;
-  this.dataView = new DataView(this.buffer);
+  this.arrayBuffer = arrayBuffer;
+  this.dataView = new DataView(this.arrayBuffer);
 };
 
 
