@@ -4,7 +4,13 @@ if (typeof require == "function"){
 }
 
 function test(label, a, b){
-  console.log("" + (a == b), label);
+  var message = (a == b) + " " + label;
+
+  if (document) {
+    document.body.innerHTML += message + "<br>";
+  } else {
+    console.log();
+  }
 }
 
 input = [123, 1234567, -1234, 0.12345];
