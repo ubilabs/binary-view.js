@@ -1,15 +1,15 @@
 
 if (typeof require == "function"){
-  BinaryView = require("./binary-view.js");
+  BinaryView = require("../binary-view.js");
 }
 
 function test(label, a, b){
   var message = (a == b) + " " + label;
 
-  if (document) {
+  if (typeof document != "undefined") {
     document.body.innerHTML += message + "<br>";
   } else {
-    console.log();
+    console.log(message);
   }
 }
 
